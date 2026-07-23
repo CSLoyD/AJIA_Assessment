@@ -1,0 +1,14 @@
+node_modules/
+dist/
+build/
+.next/
+.env
+.env.local
+*.log
+.DS_Store
+coverage/
+
+# AI-assistant instruction files kept local only, per project instructions
+AGENTS.md
+CLAUDE.md
+GEMINI.md
