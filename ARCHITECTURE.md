@@ -4,8 +4,7 @@
 
 A scoped slice of a collaborative document editor: create/rename/edit rich-text
 documents, import a .txt/.md file as a new document, share a document with another
-seeded user, and persist all of it in Postgres. Full spec:
-[docs/specs/2026-07-23-collaborative-doc-editor-design.md](specs/2026-07-23-collaborative-doc-editor-design.md).
+seeded user, and persist all of it in Postgres.
 
 ## What was prioritized
 
