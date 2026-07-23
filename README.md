@@ -2,10 +2,7 @@
 
 A scoped, working slice of a Google-Docs-like editor: create/rename/edit rich-text
 documents, import a `.txt` or `.md` file as a new document, share a document with
-another user, and persist everything. See
-[docs/architecture-note.md](docs/architecture-note.md) for what was prioritized and
-cut, and [docs/specs/2026-07-23-collaborative-doc-editor-design.md](docs/specs/2026-07-23-collaborative-doc-editor-design.md)
-for the full design.
+another user, and persist everything.
 
 ## Stack
 
@@ -74,9 +71,3 @@ and copy its connection string, deploy `backend/` to Render using `render.yaml`
 Vercel URL once known), then deploy `frontend/` to Vercel with `NEXT_PUBLIC_API_URL`
 set to the Render backend URL. Render's free tier sleeps after inactivity, so the
 first request after idle may take up to ~30 seconds.
-
-## Scope
-
-See [docs/architecture-note.md](docs/architecture-note.md) for what's deliberately
-out of scope (no real auth, no role-based sharing, no real-time collaboration, no
-version history) and why.
