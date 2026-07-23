@@ -1,12 +1,50 @@
 import { Router } from 'express'
+import multer from 'multer'
+import { Prisma } from '@prisma/client'
 import { prisma } from '../db'
 import { AuthedRequest, currentUser } from '../middleware/currentUser'
 import { canAccessDocument } from '../lib/authorize'
+import {
+  markdownToDocumentJson,
+  plainTextToDocumentJson,
+  titleFromFilename,
+} from '../lib/importDocument'
 
 export const documentsRouter = Router()
 documentsRouter.use(currentUser)
 
 const emptyDocument = { type: 'doc', content: [{ type: 'paragraph' }] }
+
+const upload = multer({ limits: { fileSize: 2 * 1024 * 1024 } })
+
+documentsRouter.post('/import', upload.single('file'), async (req: AuthedRequest, res) => {
+  const file = req.file
+  if (!file) {
+    res.status(400).json({ error: 'No file provided' })
+    return
+  }
+
+  const name = file.originalname.toLowerCase()
+  const isMarkdown = name.endsWith('.md')
+  const isText = name.endsWith('.txt')
+  if (!isMarkdown && !isText) {
+    res.status(400).json({ error: 'Only .txt and .md files are supported' })
+    return
+  }
+
+  const text = file.buffer.toString('utf-8')
+  const content = isMarkdown ? markdownToDocumentJson(text) : plainTextToDocumentJson(text)
+
+  const document = await prisma.document.create({
+    data: {
+      title: titleFromFilename(file.originalname),
+      content: content as unknown as Prisma.InputJsonValue,
+      ownerId: req.currentUser!.id,
+    },
+  })
+
+  res.status(201).json(document)
+})
 
 async function loadAccessibleDocument(id: string, userId: string) {
   const document = await prisma.document.findUnique({
