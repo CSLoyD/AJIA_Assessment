@@ -31,6 +31,12 @@ export default function DocumentPage() {
       .catch(() => router.push('/dashboard'))
   }, [params.id, router])
 
+  useEffect(() => {
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current)
+    }
+  }, [])
+
   function handleContentChange(content: unknown) {
     setStatus('saving')
     if (saveTimer.current) clearTimeout(saveTimer.current)
@@ -38,6 +44,7 @@ export default function DocumentPage() {
       try {
         await api.saveDocumentContent(params.id, content)
         setStatus('saved')
+        setError(null)
       } catch (err) {
         setStatus('error')
         setError(err instanceof Error ? err.message : 'Save failed')
@@ -50,6 +57,7 @@ export default function DocumentPage() {
     try {
       const updated = await api.renameDocument(params.id, title)
       setDocument(updated)
+      setError(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Rename failed')
     }
