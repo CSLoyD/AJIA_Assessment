@@ -76,4 +76,33 @@ describe('document creation and retrieval', () => {
     await prisma.document.delete({ where: { id: documentId } })
     await prisma.user.delete({ where: { id: recipient.id } })
   })
+
+  it('saves document content and persists it across a subsequent fetch', async () => {
+    const createResponse = await agent.post('/documents').send({ title: 'Content Test Doc' }).expect(201)
+    const documentId = createResponse.body.id
+
+    const newContent = { type: 'doc', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'saved' }] }] }
+    const putResponse = await agent.put(`/documents/${documentId}`).send({ content: newContent }).expect(200)
+    expect(putResponse.body.content).toEqual(newContent)
+
+    const getResponse = await agent.get(`/documents/${documentId}`).expect(200)
+    expect(getResponse.body.content).toEqual(newContent)
+
+    await prisma.document.delete({ where: { id: documentId } })
+  })
+
+  it('renames a document and rejects a blank title', async () => {
+    const createResponse = await agent.post('/documents').send({ title: 'Original Title' }).expect(201)
+    const documentId = createResponse.body.id
+
+    const patchResponse = await agent.patch(`/documents/${documentId}`).send({ title: 'Renamed Title' }).expect(200)
+    expect(patchResponse.body.title).toBe('Renamed Title')
+
+    const getResponse = await agent.get(`/documents/${documentId}`).expect(200)
+    expect(getResponse.body.title).toBe('Renamed Title')
+
+    await agent.patch(`/documents/${documentId}`).send({ title: '   ' }).expect(400)
+
+    await prisma.document.delete({ where: { id: documentId } })
+  })
 })
