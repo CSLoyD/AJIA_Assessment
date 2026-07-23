@@ -145,3 +145,70 @@ documentsRouter.put('/:id', async (req: AuthedRequest, res) => {
 
   res.json(updated)
 })
+
+documentsRouter.get('/:id/shareable-users', async (req: AuthedRequest, res) => {
+  const document = await prisma.document.findUnique({
+    where: { id: req.params.id },
+    include: { shares: true },
+  })
+
+  if (!document || document.ownerId !== req.currentUser!.id) {
+    res.status(404).json({ error: 'Document not found' })
+    return
+  }
+
+  const excludedIds = new Set([document.ownerId, ...document.shares.map((share) => share.userId)])
+  const users = await prisma.user.findMany({ where: { id: { notIn: [...excludedIds] } } })
+  res.json(users)
+})
+
+documentsRouter.get('/:id/shares', async (req: AuthedRequest, res) => {
+  const document = await prisma.document.findUnique({ where: { id: req.params.id } })
+  if (!document || document.ownerId !== req.currentUser!.id) {
+    res.status(404).json({ error: 'Document not found' })
+    return
+  }
+
+  const shares = await prisma.documentShare.findMany({
+    where: { documentId: document.id },
+    include: { user: true },
+  })
+
+  res.json(shares.map((share) => ({ userId: share.userId, userName: share.user.name })))
+})
+
+documentsRouter.post('/:id/share', async (req: AuthedRequest, res) => {
+  const document = await prisma.document.findUnique({ where: { id: req.params.id } })
+  if (!document || document.ownerId !== req.currentUser!.id) {
+    res.status(404).json({ error: 'Document not found' })
+    return
+  }
+
+  const { userId } = req.body as { userId?: string }
+  if (!userId) {
+    res.status(400).json({ error: 'userId is required' })
+    return
+  }
+
+  const share = await prisma.documentShare.upsert({
+    where: { documentId_userId: { documentId: document.id, userId } },
+    update: {},
+    create: { documentId: document.id, userId },
+  })
+
+  res.status(201).json(share)
+})
+
+documentsRouter.delete('/:id/share/:userId', async (req: AuthedRequest, res) => {
+  const document = await prisma.document.findUnique({ where: { id: req.params.id } })
+  if (!document || document.ownerId !== req.currentUser!.id) {
+    res.status(404).json({ error: 'Document not found' })
+    return
+  }
+
+  await prisma.documentShare.deleteMany({
+    where: { documentId: document.id, userId: req.params.userId },
+  })
+
+  res.status(204).end()
+})

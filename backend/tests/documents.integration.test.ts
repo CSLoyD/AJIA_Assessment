@@ -53,4 +53,27 @@ describe('document creation and retrieval', () => {
     await prisma.document.delete({ where: { id: otherDoc.id } })
     await prisma.user.delete({ where: { id: otherUser.id } })
   })
+
+  it('lets the owner share a document and the recipient then access it', async () => {
+    const recipient = await prisma.user.upsert({
+      where: { name: 'Recipient User' },
+      update: {},
+      create: { name: 'Recipient User' },
+    })
+
+    const createResponse = await agent.post('/documents').send({ title: 'Shared Doc' }).expect(201)
+    const documentId = createResponse.body.id
+
+    await agent.post(`/documents/${documentId}/share`).send({ userId: recipient.id }).expect(201)
+
+    const recipientAgent = request.agent(app)
+    await recipientAgent.post('/auth/login').send({ userId: recipient.id }).expect(200)
+    await recipientAgent.get(`/documents/${documentId}`).expect(200)
+
+    await agent.delete(`/documents/${documentId}/share/${recipient.id}`).expect(204)
+    await recipientAgent.get(`/documents/${documentId}`).expect(404)
+
+    await prisma.document.delete({ where: { id: documentId } })
+    await prisma.user.delete({ where: { id: recipient.id } })
+  })
 })
