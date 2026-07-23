@@ -24,8 +24,11 @@ Requires Docker.
 docker compose up --build
 ```
 
-Then open `http://localhost:3000`. The backend runs its database migrations and
-seeds three demo users (Alice, Bob, Carol) automatically on startup.
+Then open `http://localhost:3000` — use `localhost`, not `127.0.0.1`. Browsers
+treat them as different sites for cookie purposes, so the demo login's session
+cookie won't be sent if you open the `127.0.0.1` address, even though the page
+itself loads fine. The backend runs its database migrations and seeds three demo
+users (Alice, Bob, Carol) automatically on startup.
 
 ## Seeded users
 
