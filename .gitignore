@@ -8,6 +8,7 @@ build/
 .DS_Store
 coverage/
 .worktrees/
+*.tsbuildinfo
 
 # AI-assistant instruction files kept local only, per project instructions
 AGENTS.md
